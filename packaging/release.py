@@ -31,7 +31,8 @@ def is_generation_file(relative):
 
 def pack(group):
     number, paths = group
-    name = f"DTHR-generation-x64-{number:02d}.zip"
+    # GitHub lists release assets by filename. Keep the editor installer above optional downloads.
+    name = f"Optional-GPU-x64-{number:02d}.zip"
     target = OUTPUT / name
     site = DIST / "runtime/Lib/site-packages"
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED, compresslevel=3) as archive:
