@@ -7,12 +7,13 @@ import re
 import secrets
 import shutil
 import tempfile
+import time
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from filelock import FileLock
 from PIL import Image, ImageOps, PngImagePlugin
-from .schema import Preset
+from .schema import DEFAULT_PRESET, Preset
 
 
 class Fault(RuntimeError):
@@ -183,9 +184,9 @@ class Store:
                 atomic(path, secrets.token_hex(32).encode())
             return path.read_text().strip()
 
-    def preset(self, name="LLMBAZ"):
+    def preset(self, name=DEFAULT_PRESET):
         path = safe_path(self.presets, name + ".json")
-        if name == "LLMBAZ" and not path.exists():
+        if name == DEFAULT_PRESET and not path.exists():
             return Preset()
         return Preset.model_validate(read_json(path))
 
@@ -195,7 +196,7 @@ class Store:
         )
 
     def preset_names(self):
-        return sorted({"LLMBAZ", *(p.stem for p in self.presets.glob("*.json"))})
+        return sorted({DEFAULT_PRESET, *(p.stem for p in self.presets.glob("*.json"))})
 
     def entries(self):
         return [
@@ -240,7 +241,15 @@ class Store:
         try:
             (stage / "original.png").write_bytes(data)
             (stage / "entry.json").write_bytes(encoded(entry))
-            stage.rename(self.originals / entry["id"])
+            # Windows indexers can hold a just-written file briefly and block its parent rename.
+            for attempt in range(6):
+                try:
+                    stage.rename(self.originals / entry["id"])
+                    break
+                except PermissionError as exc:
+                    if getattr(exc, "winerror", None) not in {5, 32} or attempt == 5:
+                        raise
+                    time.sleep(0.025 * 2**attempt)
         finally:
             if stage.exists():
                 shutil.rmtree(stage)

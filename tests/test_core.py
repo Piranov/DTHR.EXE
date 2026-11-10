@@ -135,7 +135,7 @@ def test_pair_failure_retry(studio):
     args = ("2026-11-07", "garden")
     with pytest.raises(ValueError):
         studio.pair(*args)
-    target = studio.store.exports / "llmbaz" / args[0]
+    target = studio.store.exports / "panels" / args[0]
     assert not target.exists() and len(studio.store.entries()) == 1
     studio.backend.generate = real
     manifest = studio.pair(*args)
@@ -146,7 +146,7 @@ def test_pair_failure_retry(studio):
 
 
 def test_preset_persistence(studio):
-    p = merged_preset(studio.store, "LLMBAZ", {"postprocess": {"strength": 91}})
+    p = merged_preset(studio.store, "Vertical Panel", {"postprocess": {"strength": 91}})
     studio.store.save_preset(p)
     assert Store(studio.store.root).preset() == p
     studio.store.save_preset(Preset())

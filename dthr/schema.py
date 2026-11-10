@@ -6,6 +6,7 @@ RGB_PATTERN = r"^#[a-fA-F0-9]{6}$"
 Color = Annotated[str, StringConstraints(pattern=RGB_PATTERN)]
 Name = Annotated[str, StringConstraints(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9 _-]{0,63}$")]
 Seed = Annotated[int, Field(ge=0, le=2**63 - 1)]
+DEFAULT_PRESET = "Vertical Panel"
 PROMPT = "Surreal gothic botanical engraving, mechanical roots, antique illustration"
 NEGATIVE = "text, letters, logos, modern objects"
 
@@ -75,7 +76,7 @@ class Export(Schema):
 
 
 class Preset(Generation):
-    name: Name = "LLMBAZ"
+    name: Name = DEFAULT_PRESET
     width: Dimension = 220
     height: Dimension = 900
     postprocess: Processing = Field(default_factory=Processing)

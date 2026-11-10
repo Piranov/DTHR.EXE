@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 from .core import Studio, merged_preset
 from .models import CATALOG, hardware, install, model_info, uninstall, versions
-from .schema import Generation, Processing
+from .schema import DEFAULT_PRESET, Generation, Processing
 from .storage import Fault, Store
 
 
@@ -25,7 +25,7 @@ def parser():
         return sub
 
     def settings(sub, generate):
-        sub.add_argument("--preset", default="LLMBAZ")
+        sub.add_argument("--preset", default=DEFAULT_PRESET)
         fields = {**Processing.model_fields, "width": None, "height": None}
         if generate:
             fields.update(Generation.model_fields)
@@ -68,7 +68,7 @@ def parser():
                 help="Explicit consent for model installation/removal",
             )
     command("health", "Show hardware, paths and dependency diagnostics")
-    pair = command("pair", "Generate the two daily LLMBAZ panels")
+    pair = command("pair", "Generate the two daily vertical panels")
     for flag in ("issue", "theme", "left", "right"):
         pair.add_argument("--" + flag, required=flag in ("issue", "theme"), default="")
     pair.add_argument("--seed", type=int, default=123456)

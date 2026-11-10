@@ -92,10 +92,10 @@ def test_packaged_gpu_and_http():
     actual = cli(
         "generate",
         "--preset",
-        "LLMBAZ",
+        "Vertical Panel",
         "--force",
         "--output",
-        str(store.exports / "llmbaz-test.png"),
+        str(store.exports / "panel-test.png"),
     )
     assert (
         actual["cache_hit"] is False
@@ -123,7 +123,7 @@ def test_packaged_gpu_and_http():
     n = len(store.entries())
     e = next(e for e in store.entries() if e["id"] == actual["original_id"])
     preset = store.preset()
-    project = store.projects / "LLMBAZ.ditherproj"
+    project = store.projects / "Vertical Panel.ditherproj"
     studio.save_project(project, e, preset, {"mode": "Split", "zoom": "Fit"})
     reopened, entry, prefs = studio.open_project(project)
     assert reopened == preset and entry == e and prefs["mode"] == "Split"
@@ -160,18 +160,18 @@ def test_packaged_gpu_and_http():
 
             hit = run(
                 "/v1/generations",
-                {"preset": "LLMBAZ", "output_name": "agent-proof.png"},
+                {"preset": "Vertical Panel", "output_name": "agent-proof.png"},
             )
             assert hit["cache_hit"] and hit["original_id"] == actual["original_id"]
             changed = run(
                 "/v1/process",
                 {
                     "original_id": e["id"],
-                    "output_name": "llmbaz-bayer.png",
+                    "output_name": "panel-bayer.png",
                     "postprocess": {"effect": "bayer", "strength": 85},
                 },
             )
-            response = client.get("/v1/exports/llmbaz-bayer.png")
+            response = client.get("/v1/exports/panel-bayer.png")
             assert (
                 response.status_code == 200
                 and hashlib.sha256(response.content).hexdigest()

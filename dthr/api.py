@@ -6,12 +6,12 @@ from pydantic import Field, ValidationError
 from .core import Studio, merged_preset
 from .jobs import Jobs
 from .models import CATALOG, model_info
-from .schema import Name, Schema
+from .schema import DEFAULT_PRESET, Name, Schema
 from .storage import Fault, safe_path
 
 
 class GenerateBody(Schema):
-    preset: Name = "LLMBAZ"
+    preset: Name = DEFAULT_PRESET
     output_name: str | None = Field(None, max_length=240)
     force: bool = False
     # Overrides are validated by Preset after merging with persisted values.
@@ -21,7 +21,7 @@ class GenerateBody(Schema):
 class ProcessBody(Schema):
     original_id: str | None = Field(None, pattern="^[0-9a-f]{32}$")
     input: str | None = Field(None, max_length=240)
-    preset: Name = "LLMBAZ"
+    preset: Name = DEFAULT_PRESET
     output_name: str = Field(max_length=240)
     model_config = dict(extra="allow")
 

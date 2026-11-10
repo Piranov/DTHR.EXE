@@ -176,7 +176,7 @@ class Studio:
     def pair(self, issue, theme, left="", right="", seed=123456, directory=None):
         issue = date.fromisoformat(issue).isoformat()
         target = self.store.writable_output(
-            Path(directory or self.store.exports / "llmbaz") / issue
+            Path(directory or self.store.exports / "panels") / issue
         )
         preset = self.store.preset()
         request = dict(

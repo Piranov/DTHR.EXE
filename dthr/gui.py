@@ -574,8 +574,8 @@ class Window(W.QMainWindow):
         if (
             W.QMessageBox.question(
                 self,
-                "Restore LLMBAZ",
-                "Replace the saved LLMBAZ preset with its original defaults?",
+                "Restore Vertical Panel",
+                "Replace the saved Vertical Panel preset with its original defaults?",
             )
             == W.QMessageBox.Yes
         ):

@@ -30,7 +30,7 @@ def test_editor(tmp_path):
     win.set_entry(studio.store.import_image(source)[0])
     settle(app, win)
     assert (
-        win.current().name == "LLMBAZ"
+        win.current().name == "Vertical Panel"
         and win.viewer.canvas.original
         and win.viewer.canvas.processed
     )
