@@ -6,6 +6,7 @@ from .core import Studio, merged_preset
 from .models import CATALOG, hardware, install, model_info, uninstall, versions
 from .schema import DEFAULT_PRESET, Generation, Processing
 from .storage import Fault, Store
+from . import runtime
 
 
 class CommandParser(argparse.ArgumentParser):
@@ -67,6 +68,14 @@ def parser():
                 action="store_true",
                 help="Explicit consent for model installation/removal",
             )
+    component = command("runtime", "Manage optional local generation support")
+    component.add_argument("action", choices=["status", "install"])
+    component.add_argument("--confirm", action="store_true")
+    component.add_argument(
+        "--from-dir",
+        type=Path,
+        help="Use checksum-verified release archives from this folder",
+    )
     command("health", "Show hardware, paths and dependency diagnostics")
     pair = command("pair", "Generate the two daily vertical panels")
     for flag in ("issue", "theme", "left", "right"):
@@ -84,6 +93,15 @@ def execute(args):
     store = Store(args.data_dir)
     studio = Studio(store)
     cmd = args.command
+    if cmd == "runtime":
+        if args.action == "status":
+            return runtime.status()
+        if not args.confirm:
+            raise Fault(
+                "confirmation_required",
+                "Pass --confirm to install the optional generation runtime",
+            )
+        return runtime.install(source=args.from_dir)
     if cmd == "gui":
         from .gui import launch
 

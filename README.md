@@ -4,7 +4,7 @@ DTHR.EXE turns images into two-color prints on Windows. Import a PNG, JPEG or We
 
 **[Download the Windows x64 installer](https://github.com/Piranov/DTHR.EXE/releases/latest/download/DTHR-Windows-x64-Setup.exe)**
 
-Run Setup, open DTHR.EXE and choose **File → Import image**. Setup downloads the bundled runtime. Image processing works offline, and local generation is available after installing a compatible model in **Tools → Model Manager**.
+Run Setup, open DTHR.EXE and choose **File → Import image**. The standalone editor download is about 75 MB. Import, preview and PNG export work offline on the CPU. The first time you choose **Generate**, the app offers to download generation support and asks separately about the selected model.
 
 | Generated original | Two-color print |
 | :---: | :---: |

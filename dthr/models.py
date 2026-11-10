@@ -7,6 +7,7 @@ from fnmatch import fnmatchcase
 from pathlib import Path
 from typing import Protocol
 from .storage import Fault, atomic, encoded, read_json
+from . import runtime
 
 
 @dataclass(frozen=True)
@@ -80,6 +81,7 @@ CATALOG = {
 
 
 def versions():
+    runtime.available()
     names = (
         "torch",
         "torchvision",
@@ -100,6 +102,8 @@ def versions():
 
 
 def hardware():
+    if not runtime.available():
+        return dict(cuda=False, message="Optional generation runtime is not installed.")
     try:
         import torch
 
@@ -139,6 +143,7 @@ def model_info(store, name):
 
 
 def install(store, name, progress=lambda *args: None):
+    runtime.require_runtime()
     spec = CATALOG[name]
     os.environ.setdefault("HF_HOME", str(store.root / "hub"))
     from huggingface_hub import HfApi, hf_hub_download
@@ -227,6 +232,7 @@ class DiffusersBackend:
         return model_info(self.store, name)
 
     def load(self, model, device):
+        runtime.require_runtime()
         if self.active == (model, device):
             return
         self.unload()

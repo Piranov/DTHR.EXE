@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import Field, ValidationError
 from .core import Studio, merged_preset
 from .jobs import Jobs
+from . import runtime
 from .models import CATALOG, model_info
 from .schema import DEFAULT_PRESET, Name, Schema
 from .storage import Fault, safe_path
@@ -86,7 +87,12 @@ def create_app(studio=None):
 
     @app.get("/v1/health")
     def health():
-        return dict(status="ok", service="DTHR.EXE", version=1)
+        return dict(
+            status="ok",
+            service="DTHR.EXE",
+            version=1,
+            generation_runtime=runtime.status(),
+        )
 
     @app.get("/v1/models")
     def models():

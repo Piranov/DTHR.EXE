@@ -2,7 +2,7 @@
 
 ## Install on Windows
 
-Download **DTHR-Windows-x64-Setup.exe** from the [latest release](https://github.com/Piranov/DTHR.EXE/releases/latest). Run it and choose an installation folder. Setup retrieves and verifies the runtime archives from the same release. For offline installation, put every runtime ZIP from that release beside the installer and run it. Leave the ZIPs compressed.
+Download **DTHR-Windows-x64-Setup.exe** from the [latest release](https://github.com/Piranov/DTHR.EXE/releases/latest). Run it and choose an installation folder. The roughly 75 MB installer contains the editor, CLI and HTTP API. You can install it offline and dither your own images immediately. An upgrade over a working 1.0 installation can reuse its existing GPU libraries.
 
 Open **DTHR.EXE** from Start and choose a folder for originals, projects, exports and optional model weights. **Tools → Storage location** changes the default for the next launch. **Tools → Cache Manager → Cache location** can put originals on a separate drive. For scripts, set `DTHR_DATA` or pass `--data-dir PATH` before the CLI command.
 
@@ -18,15 +18,19 @@ Open **DTHR.EXE** from Start and choose a folder for originals, projects, export
 
 ## Local generation
 
+Choose **Generate** to enable local generation. The first use offers the generation runtime (about 3 GB), then asks separately for any missing model weights. The app shows progress and continues the pending request when installation finishes. Verified archives are reused on retry. You can also install the runtime ahead of time under **Tools → Model Manager → Install generation support**.
+
+For automation, run `dthr-cli.exe runtime status --json` to check availability and `dthr-cli.exe runtime install --confirm` to opt in. For offline setup, put all the matching generation ZIP files from the release in one folder and pass `--from-dir "C:\Downloads\DTHR"` to the install command. The app verifies each archive against checksums bundled with the editor. Model weights are separate. The server never installs generation code from an API request.
+
 **Tools → Model Manager** lists available adapters, installed weights, disk usage, licenses and supported controls. Select a model and confirm the download. The selected adapter determines which settings take effect. A preset stores its model choice along with generation and processing settings.
 
 The app caches each generated original with its exact parameters, model revision and checksum. An identical generation request can reuse the cached image. **Force generation** creates a fresh original. Seeds help repeat a composition, but exact pixel reuse comes from the cached PNG. Choose a smaller internal resolution or offloading if GPU memory is limited.
 
-### Supported models in version 1.0
+### Supported models in version 1.1
 
 | Model | Support |
 | --- | --- |
-| SDXL Base (`sdxl-base`) | Verified on an RTX 5090 with the bundled CUDA 12.8 runtime. Approximately 7 GB of weights. Supports negative prompts, guidance and a choice of scheduler. [Model card and license](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/tree/462165984030d82259a11f4367a4eed129e94a7b) |
+| SDXL Base (`sdxl-base`) | Verified on an RTX 5090 with the optional CUDA 12.8 runtime. Approximately 7 GB of weights. Supports negative prompts, guidance and a choice of scheduler. [Model card and license](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/tree/462165984030d82259a11f4367a4eed129e94a7b) |
 | FLUX.2 Klein 4B (`flux2-klein-4b`) | Experimental adapter. Uses fixed guidance, its own scheduler and an empty negative prompt. Real-weight inference remains unverified. [Model card and license](https://huggingface.co/black-forest-labs/FLUX.2-klein-4B/tree/e7b7dc27f91deacad38e78976d1f2b499d76a294) |
 
 ## Command line
@@ -71,7 +75,7 @@ For remote use, bind explicitly to a private interface with `serve --host PRIVAT
 
 ## Build from source
 
-Use 64-bit CPython 3.13.5 on Windows. The release bundles Qt and a CUDA-enabled PyTorch runtime. From the repository root in PowerShell:
+Use 64-bit CPython 3.13.5 on Windows. The editor includes Qt. The generation component supplies the locked CUDA-enabled PyTorch runtime. From the repository root in PowerShell:
 
 ~~~powershell
 py -3.13 -m venv .venv
@@ -82,6 +86,6 @@ py -3.13 -m venv .venv
 .\.venv\Scripts\python packaging\build.py
 ~~~
 
-The folder distribution is written to `dist/DTHR`. Keep the entire folder together. To build the release installer, run `packaging/release.py` with the path to the Inno Setup 7 compiler. Installer and runtime archives are written to `build/release`.
+The folder distribution is written to `dist/DTHR`. Keep the entire folder together. To build the release installer, run `packaging/release.py` with the path to the Inno Setup 7 compiler. The standalone editor installer and optional generation archives are written to the versioned directory under `build/release`.
 
 The optional packaged GPU tests require the verified model and target hardware. The desktop, CLI, API, effects and cache have separate regression tests. The camera fixture is Lav Varshney's CC0 photograph from scikit-image. [Fixture provenance](https://scikit-image.org/docs/stable/api/skimage.data.html#skimage.data.camera)

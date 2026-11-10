@@ -100,3 +100,37 @@ def test_color_draft_keeps_preview(tmp_path, field):
         assert not win.log.toPlainText() and not studio.backend.calls
     finally:
         win.close()
+
+
+def test_generate_offers_optional_runtime(tmp_path, monkeypatch):
+    from dthr import gui, runtime
+
+    app = W.QApplication.instance() or W.QApplication([])
+    studio = Studio(
+        Store(tmp_path / "data"), RecordingBackend(), lambda: {"cuda": False}
+    )
+    win = Window(studio)
+    answers = []
+    calls = []
+    monkeypatch.setattr(runtime, "available", lambda: False)
+    monkeypatch.setattr(
+        runtime,
+        "status",
+        lambda: dict(installed=False, managed=True, download_bytes=3_000_000_000),
+    )
+    monkeypatch.setattr(W.QMessageBox, "question", lambda *a: answers.pop(0))
+    monkeypatch.setattr(runtime, "install", lambda *a: calls.append("runtime"))
+    monkeypatch.setattr(gui, "install", lambda *a: calls.append("model"))
+    try:
+        answers.append(W.QMessageBox.No)
+        win.generate()
+        assert not calls and not studio.backend.calls
+        answers.extend([W.QMessageBox.Yes, W.QMessageBox.No])
+        win.generate()
+        assert not calls and not studio.backend.calls
+        answers.extend([W.QMessageBox.Yes, W.QMessageBox.Yes])
+        win.generate()
+        settle(app, win)
+        assert calls == ["runtime", "model"] and len(studio.backend.calls) == 1
+    finally:
+        win.close()

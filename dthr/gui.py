@@ -7,6 +7,7 @@ from PySide6 import QtCore as C, QtGui as G, QtWidgets as W
 from .core import Studio
 from .effects import fitted, luminance, quantize
 from .models import CATALOG, hardware, install, model_info, uninstall, versions
+from . import __version__, runtime
 from .schema import Preset, Processing
 from .storage import Store, atomic, read_json, remember_root
 from .widgets import ColorInput, Viewer, combo, number, pixmap
@@ -412,8 +413,46 @@ class Window(W.QMainWindow):
         self.viewer.status.setText(state.replace("_", " ").capitalize())
         self.statusBar().showMessage(state)
 
+    def confirm_runtime(self):
+        info = runtime.status()
+        if info["installed"]:
+            return True
+        if not info["managed"]:
+            runtime.require_runtime()
+        size = info["download_bytes"] / 1e9
+        return (
+            W.QMessageBox.question(
+                self,
+                "Enable local generation",
+                f"Download and install the optional generation runtime ({size:.2f} GB)? "
+                "Image editing works without it.",
+                W.QMessageBox.Yes | W.QMessageBox.No,
+                W.QMessageBox.No,
+            )
+            == W.QMessageBox.Yes
+        )
+
     def generate(self):
         p = self.current()
+        needs_runtime = not runtime.available()
+        if needs_runtime and not self.confirm_runtime():
+            return
+        # Offer weights separately so enabling generation never authorizes a model implicitly.
+        needs_model = needs_runtime and not model_info(self.store, p.model)["installed"]
+        if needs_model:
+            spec = CATALOG[p.model]
+            size = 7 if p.model == "sdxl-base" else 13
+            if (
+                W.QMessageBox.question(
+                    self,
+                    "Install model",
+                    f"Also download {spec.repo} (about {size} GB) to generate this image?\nLicense: {spec.license}",
+                    W.QMessageBox.Yes | W.QMessageBox.No,
+                    W.QMessageBox.No,
+                )
+                != W.QMessageBox.Yes
+            ):
+                return
         force = False
         if any(
             e["generation"].get("model") == p.model
@@ -437,6 +476,16 @@ class Window(W.QMainWindow):
 
         def work():
             try:
+                if needs_runtime:
+                    runtime.install(
+                        lambda f, msg: self.bus.progress.emit(msg, f), self.cancel_event
+                    )
+                if needs_model and not self.cancel_event.is_set():
+                    install(
+                        self.store,
+                        p.model,
+                        lambda f, msg: self.bus.progress.emit(msg, f),
+                    )
                 return self.studio.generate(
                     p,
                     force=force,
@@ -666,7 +715,7 @@ class Window(W.QMainWindow):
             lambda: W.QMessageBox.about(
                 self,
                 "DTHR.EXE",
-                "DTHR.EXE   /   1.0\nLocal image generation and two-color print processing.",
+                f"DTHR.EXE   /   {__version__}\nLocal image generation and two-color print processing.",
             ),
         )
 
@@ -747,12 +796,19 @@ class Window(W.QMainWindow):
 
         def refresh():
             data = model_info(self.store, model.currentText())
+            data["generation_runtime"] = runtime.status()
+            runtime_button.setEnabled(not data["generation_runtime"]["installed"])
             info.setPlainText(
                 json.dumps({**data, "loaded": self.studio.backend.active}, indent=2)
             )
 
         def run(action):
             name = model.currentText()
+            if (
+                action in ("Generation runtime", "Install", "Load")
+                and not self.confirm_runtime()
+            ):
+                return
             if action in ("Install", "Remove"):
                 spec = CATALOG[name]
                 question = (
@@ -775,6 +831,10 @@ class Window(W.QMainWindow):
             device = self.value("device")
 
             def work():
+                if action in ("Generation runtime", "Install", "Load"):
+                    runtime.install(lambda f, msg: self.bus.progress.emit(msg, f))
+                    if action == "Generation runtime":
+                        return
                 if action == "Install":
                     return install(
                         self.store,
@@ -795,6 +855,9 @@ class Window(W.QMainWindow):
 
             self.task(work, lambda _: refresh(), gpu=True)
 
+        runtime_button = self.button(
+            layout, "Install generation support…", lambda: run("Generation runtime")
+        )
         for label in ("Install", "Load", "Unload", "Remove"):
             self.button(layout, label, lambda a=label: run(a))
         self.button(
